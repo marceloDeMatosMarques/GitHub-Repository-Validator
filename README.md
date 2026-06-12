@@ -89,6 +89,12 @@ Existem dois tipos disponíveis no GitHub:
 
 Depois reinicie o servidor.
 
+## Política de Segurança
+
+Este repositório inclui uma política de segurança no arquivo `.github/SECURITY.md`.
+
+Se você encontrar vulnerabilidades, siga as instruções desse arquivo para reportar de forma segura.
+
 ## Como Usar
 
 ### 1. Validar Repositório
