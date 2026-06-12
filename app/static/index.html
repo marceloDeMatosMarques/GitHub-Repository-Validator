@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Validador de Repositórios GitHub</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #1a1a2e;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .tabs {
+            display: flex;
+            background: #f0f0f0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 16px;
+            background: none;
+            border: none;
+            font-size: 1em;
+            cursor: pointer;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: white;
+        }
+        .tab-btn:hover { background: #fafafa; }
+        .tab-content { display: none; padding: 40px; }
+        .tab-content.active { display: block; }
+        .search-section {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        input[type="text"], input[type="number"], select {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3); }
+        button:active { transform: translateY(0); }
+        button.secondary {
+            background: #666;
+        }
+        button.secondary:hover { box-shadow: 0 10px 20px rgba(102, 102, 102, 0.3); }
+        button.danger {
+            background: #ef4444;
+        }
+        button.success {
+            background: #10b981;
+        }
+        .result { margin-top: 24px; }
+        .result.hidden { display: none; }
+        .verdict-section {
+            padding: 30px;
+            text-align: center;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .verdict-badge {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        .verdict-badge.aprovado { background: #10b981; color: white; }
+        .verdict-badge.condicional { background: #f59e0b; color: white; }
+        .verdict-badge.reprovado { background: #ef4444; color: white; }
+        .score-display {
+            font-size: 3.5em;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 20px 0;
+        }
+        .save-button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .score-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+        .score-card:hover { transform: translateY(-4px); }
+        .score-card h3 {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .score-bar {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        .score-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #667eea;
+        }
+        .notes {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+        }
+        .note-item {
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .note-item::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #f59e0b;
+        }
+        .loading { text-align: center; padding: 40px; font-size: 1.1em; color: #666; }
+        .error {
+            background: #fee;
+            color: #c00;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #c00;
+        }
+        .success-msg {
+            background: #efe;
+            color: #060;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #060;
+        }
+        .repo-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .repo-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .repo-item:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+        .repo-item.selected { border: 2px solid #667eea; background: #f0f4ff; }
+        .repo-name { font-size: 1.1em; font-weight: 700; margin-bottom: 10px; }
+        .repo-meta {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .repo-score {
+            font-size: 2em;
+            font-weight: 900;
+            color: #667eea;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal-title { font-size: 1.5em; margin-bottom: 20px; }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+        }
+        .form-group textarea { min-height: 80px; }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        .modal-buttons button { flex: 1; }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .comparison-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .comparison-card h3 { font-size: 1.2em; margin-bottom: 15px; color: #667eea; }
+        .comparison-metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .comparison-metric-label { color: #666; }
+        .comparison-metric-value { font-weight: 700; }
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 0.95em;
+        }
+        .metric-label { color: #666; }
+        .metric-value { font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Validador de Repositórios GitHub</h1>
+            <p>Avalie e compare repositórios para projetos com IA</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('validate')">🔍 Validar</button>
+            <button class="tab-btn" onclick="switchTab('saved')">💾 Salvos</button>
+            <button class="tab-btn" onclick="switchTab('compare')">⚖️ Comparar</button>
+            <button class="tab-btn" onclick="switchTab('categories')">📂 Categorias</button>
+        </div>
+
+        <!-- TAB: VALIDAR -->
+        <div class="tab-content active" id="validate">
+            <div class="search-section">
+                <form id="validator-form" style="display: flex; gap: 10px; flex: 1;">
+                    <input type="text" id="repo" placeholder="Ex: tensorflow/tensorflow" autocomplete="off" style="flex: 1;"/>
+                    <button type="submit">Avaliar</button>
+                </form>
+            </div>
+            <div class="result hidden" id="result"></div>
+        </div>
+
+        <!-- TAB: SALVOS -->
+        <div class="tab-content" id="saved">
+            <h2 style="margin-bottom: 20px;">Repositórios Salvos</h2>
+            <div style="margin-bottom: 20px;">
+                <select id="filter-category" onchange="loadSavedRepos()" style="padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 10px;">
+                    <option value="">Todas as categorias</option>
+                </select>
+            </div>
+            <div class="repo-list" id="saved-list"></div>
+        </div>
+
+        <!-- TAB: COMPARAR -->
+        <div class="tab-content" id="compare">
+            <h2 style="margin-bottom: 20px;">Comparar Repositórios</h2>
+            <button onclick="compareSelected()" style="margin-bottom: 20px;">Comparar Selecionados</button>
+            <div id="comparison-result"></div>
+        </div>
+
+        <!-- TAB: CATEGORIAS -->
+        <div class="tab-content" id="categories">
+            <h2 style="margin-bottom: 20px;">Gerenciar Categorias</h2>
+            <button onclick="openCategoryModal()" style="margin-bottom: 20px;">+ Nova Categoria</button>
+            <div id="categories-list"></div>
+        </div>
+    </div>
+
+    <!-- MODAL: SALVAR REPOSITÓRIO -->
+    <div class="modal" id="save-modal">
+        <div class="modal-content">
+            <div class="modal-title">💾 Salvar Repositório</div>
+            <form id="save-form">
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="save-category" required>
+                        <option value="">Selecione uma categoria</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="success">Salvar</button>
+                    <button type="button" class="secondary" onclick="closeSaveModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: NOVA CATEGORIA -->
+    <div class="modal" id="category-modal">
+        <div class="modal-content">
+            <div class="modal-title">📂 Nova Categoria</div>
+            <form id="category-form">
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" id="cat-name" required />
+                </div>
+                <div class="form-group">
+                    <label>Descrição (opcional)</label>
+                    <textarea id="cat-desc"></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="success">Criar</button>
+                    <button type="button" class="secondary" onclick="closeCategoryModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentValidation = null;
+        let selectedRepos = new Set();
+
+        // ===== ABAS =====
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabName === 'saved') loadSavedRepos();
+            if (tabName === 'categories') loadCategories();
+        }
+
+        // ===== VALIDAÇÃO =====
+        document.getElementById('validator-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const repo = document.getElementById('repo').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            if (!repo) {
+                resultDiv.innerHTML = '<div class="error">Digite um repositório válido!</div>';
+                resultDiv.classList.remove('hidden');
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="loading">⏳ Analisando...</div>';
+            resultDiv.classList.remove('hidden');
+
+            try {
+                const response = await fetch(`/validate?repo=${encodeURIComponent(repo)}`);
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail);
+                }
+                currentValidation = await response.json();
+                displayValidation(currentValidation);
+            } catch (err) {
+                resultDiv.innerHTML = `<div class="error">❌ ${err.message}</div>`;
+            }
+        });
+
+        const getColorByScore = (score, maxScore) => {
+            const pct = (score / maxScore) * 100;
+            if (pct >= 80) return '#10b981';
+            if (pct >= 60) return '#f59e0b';
+            return '#ef4444';
+        };
+
+        function displayValidation(data) {
+            const verdictClass = data.verdict.toLowerCase();
+            const emoji = {'aprovado': '✅', 'condicional': '⚠️', 'reprovado': '❌'}[verdictClass] || '❓';
+            const elimination = data.elimination_reason ? `<div class="error" style="margin-top: 20px;">⛔ ${data.elimination_reason}</div>` : '';
+
+            let cardsHtml = `<div class="scores-grid">`;
+            const criteria = [
+                {name: '📅 Atividade', key: 'activity', max: 25},
+                {name: '⭐ Popularidade', key: 'popularity', max: 10},
+                {name: '📖 Documentação', key: 'documentation', max: 15},
+                {name: '🔒 Licença', key: 'license', max: 15},
+                {name: '🧪 Testes/CI', key: 'tests_ci', max: 10},
+                {name: '👥 Comunidade', key: 'community', max: 10},
+                {name: '🔐 Segurança', key: 'security', max: 15},
+            ];
+
+            criteria.forEach(c => {
+                const detail = data.details[c.key];
+                const pct = (detail.score / c.max) * 100;
+                const color = getColorByScore(detail.score, c.max);
+                const notes = detail.notes.map(n => `<div class="note-item">${n}</div>`).join('');
+                cardsHtml += `<div class="score-card">
+                    <h3>${c.name} <span class="score-value">${detail.score}/${c.max}</span></h3>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: ${pct}%; background: ${color};"></div></div>
+                    <div class="notes">${notes}</div>
+                </div>`;
+            });
+            cardsHtml += `</div>`;
+
+            document.getElementById('result').innerHTML = `
+                <div class="verdict-section">
+                    <div style="font-size: 0.95em; color: #666; margin-bottom: 15px;"><strong>${data.repository}</strong></div>
+                    <div class="verdict-badge ${verdictClass}">${emoji} ${data.verdict.toUpperCase()}</div>
+                    <div class="score-display">${data.score}/100</div>
+                    ${elimination}
+                    <div class="save-button-group">
+                        <button class="success" onclick="openSaveModal()">💾 Salvar</button>
+                    </div>
+                </div>
+                ${cardsHtml}
+            `;
+        }
+
+        // ===== CATEGORIAS =====
+        async function loadCategories() {
+            try {
+                const res = await fetch('/categories');
+                const cats = await res.json();
+                let html = '';
+                cats.forEach(cat => {
+                    html += `<div class="repo-item" style="border: 2px solid #667eea;">
+                        <div style="font-weight: 700; color: #667eea;">${cat.name}</div>
+                        <div style="color: #666; font-size: 0.9em;">${cat.description || '-'}</div>
+                    </div>`;
+                });
+                document.getElementById('categories-list').innerHTML = html || '<p>Nenhuma categoria criada.</p>';
+                
+                const sel = document.getElementById('save-category');
+                sel.innerHTML = '<option value="">Selecione</option>';
+                cats.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat.id;
+                    opt.textContent = cat.name;
+                    sel.appendChild(opt);
+                });
+
+                const filterSel = document.getElementById('filter-category');
+                filterSel.innerHTML = '<option value="">Todas</option>';
+                cats.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat.id;
+                    opt.textContent = cat.name;
+                    filterSel.appendChild(opt);
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function openCategoryModal() {
+            document.getElementById('category-modal').classList.add('show');
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('category-modal').classList.remove('show');
+        }
+
+        document.getElementById('category-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const res = await fetch('/categories', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        name: document.getElementById('cat-name').value,
+                        description: document.getElementById('cat-desc').value
+                    })
+                });
+                if (res.ok) {
+                    closeCategoryModal();
+                    loadCategories();
+                    document.getElementById('cat-name').value = '';
+                    document.getElementById('cat-desc').value = '';
+                } else {
+                    alert('Erro: ' + (await res.json()).detail);
+                }
+            } catch (e) {
+                alert('Erro ao criar categoria');
+            }
+        });
+
+        // ===== SALVAR REPOSITÓRIO =====
+        function openSaveModal() {
+            if (!currentValidation) {
+                alert('Valide um repositório primeiro');
+                return;
+            }
+            loadCategories();
+            document.getElementById('save-modal').classList.add('show');
+        }
+
+        function closeSaveModal() {
+            document.getElementById('save-modal').classList.remove('show');
+        }
+
+        document.getElementById('save-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const catId = parseInt(document.getElementById('save-category').value);
+            if (!catId) {
+                alert('Selecione uma categoria');
+                return;
+            }
+
+            try {
+                const res = await fetch('/save-repo', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        repo_name: currentValidation.repository,
+                        category_id: catId,
+                        validation_data: currentValidation
+                    })
+                });
+                if (res.ok) {
+                    closeSaveModal();
+                    document.getElementById('result').innerHTML += '<div class="success-msg">✅ Repositório salvo com sucesso!</div>';
+                } else {
+                    alert('Erro: ' + (await res.json()).detail);
+                }
+            } catch (e) {
+                alert('Erro ao salvar');
+            }
+        });
+
+        // ===== CARREGAR SALVOS =====
+        async function loadSavedRepos() {
+            const catId = document.getElementById('filter-category').value || undefined;
+            try {
+                const url = catId ? `/saved-repos?category_id=${catId}` : '/saved-repos';
+                const res = await fetch(url);
+                const repos = await res.json();
+                
+                let html = '';
+                repos.forEach(repo => {
+                    html += `<div class="repo-item ${selectedRepos.has(repo.id) ? 'selected' : ''}" onclick="toggleSelect(${repo.id})">
+                        <div class="repo-name">${repo.repo_name}</div>
+                        <div class="repo-meta">Veredicto: ${repo.verdict}</div>
+                        <div class="repo-score">${repo.score}/100</div>
+                    </div>`;
+                });
+                document.getElementById('saved-list').innerHTML = html || '<p>Nenhum repositório salvo.</p>';
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function toggleSelect(repoId) {
+            if (selectedRepos.has(repoId)) {
+                selectedRepos.delete(repoId);
+            } else {
+                selectedRepos.add(repoId);
+            }
+            loadSavedRepos();
+        }
+
+        // ===== COMPARAÇÃO =====
+        async function compareSelected() {
+            if (selectedRepos.size < 2) {
+                alert('Selecione pelo menos 2 repositórios');
+                return;
+            }
+            if (selectedRepos.size > 5) {
+                alert('Máximo 5 repositórios');
+                return;
+            }
+
+            const ids = Array.from(selectedRepos).join('&repo_ids=');
+            try {
+                const res = await fetch(`/compare?repo_ids=${ids}`);
+                const data = await res.json();
+                displayComparison(data);
+            } catch (e) {
+                alert('Erro ao comparar');
+            }
+        }
+
+        function displayComparison(data) {
+            const repos = data.repositories;
+            const maxScore = 100;
+
+            let html = '<div style="margin-bottom: 20px;">';
+            html += `<div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button class="secondary" onclick="exportComparison('json')">📥 JSON</button>
+                <button class="secondary" onclick="exportComparison('csv')">📥 CSV</button>
+            </div>`;
+
+            html += '<div class="comparison-grid">';
+            repos.forEach(repo => {
+                const color = getColorByScore(repo.score, maxScore);
+                html += `<div class="comparison-card">
+                    <h3 style="color: ${color};">${repo.name}</h3>
+                    <div class="comparison-metric">
+                        <span>Score</span>
+                        <span class="metric-value">${repo.score}/100</span>
+                    </div>
+                    <div class="comparison-metric">
+                        <span>Veredicto</span>
+                        <span>${repo.verdict}</span>
+                    </div>`;
+                
+                if (repo.details) {
+                    const criteria = ['activity', 'popularity', 'documentation', 'license', 'tests_ci', 'community', 'security'];
+                    criteria.forEach(key => {
+                        if (repo.details[key]) {
+                            html += `<div class="comparison-metric">
+                                <span>${key}</span>
+                                <span>${repo.details[key].score}/${{'activity': 25, 'popularity': 10, 'documentation': 15, 'license': 15, 'tests_ci': 10, 'community': 10, 'security': 15}[key]}</span>
+                            </div>`;
+                        }
+                    });
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+
+            document.getElementById('comparison-result').innerHTML = html;
+        }
+
+        function exportComparison(format) {
+            const catId = document.getElementById('filter-category').value || undefined;
+            const url = format === 'json' ? `/export/json${catId ? '?category_id=' + catId : ''}` : `/export/csv${catId ? '?category_id=' + catId : ''}`;
+            window.open(url);
+        }
+
+        // Load categories on start
+        loadCategories();
+    </script>
+</body>
+</html>
+
