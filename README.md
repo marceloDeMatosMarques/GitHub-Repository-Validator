@@ -1,5 +1,10 @@
 # GitHub Repository Validator
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub issues](https://img.shields.io/github/issues/marceloDeMatosMarques/GitHub-Repository-Validator)](https://github.com/marceloDeMatosMarques/GitHub-Repository-Validator/issues)
+[![GitHub stars](https://img.shields.io/github/stars/marceloDeMatosMarques/GitHub-Repository-Validator)](https://github.com/marceloDeMatosMarques/GitHub-Repository-Validator/stargazers)
+[![GitHub repo size](https://img.shields.io/github/repo-size/marceloDeMatosMarques/GitHub-Repository-Validator)](https://github.com/marceloDeMatosMarques/GitHub-Repository-Validator)
+
 Este projeto é um verificador online de repositórios GitHub em Python, projetado para avaliar se um repositório é confiável para uso em projetos de código gerado por IA.
 
 ## ✨ Funcionalidades
@@ -94,7 +99,11 @@ Depois reinicie o servidor.
 Este repositório inclui uma política de segurança no arquivo `.github/SECURITY.md`.
 
 Se você encontrar vulnerabilidades, siga as instruções desse arquivo para reportar de forma segura.
+## Documentação e Exemplos
 
+- `CHANGELOG.md` contém o histórico de versões
+- `docs/README.md` descreve a documentação adicional
+- `EXAMPLES.md` apresenta exemplos de uso funcionais
 ## Como Usar
 
 ### 1. Validar Repositório
