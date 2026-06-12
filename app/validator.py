@@ -99,7 +99,10 @@ class GitHubRepoValidator:
         changelog_exists = await self._exists_path(owner, name, "CHANGELOG.md")
         contributing_exists = await self._exists_path(owner, name, "CONTRIBUTING.md")
         conduct_exists = await self._exists_path(owner, name, "CODE_OF_CONDUCT.md")
-        security_exists = await self._exists_path(owner, name, "SECURITY.md")
+        security_exists = (
+            await self._exists_path(owner, name, "SECURITY.md") or
+            await self._exists_path(owner, name, ".github/SECURITY.md")
+        )
         github_workflows = await self._exists_path(owner, name, ".github/workflows")
 
         last_commit_info = await self._get_commits(owner, name)
